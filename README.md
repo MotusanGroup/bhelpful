@@ -18,7 +18,7 @@ Add it to your project like this:
 	// initialize it
 	instance.initialize();
 
-By default, it will try to resolve help resources with a GET request to '/resources/<locale>/help.js'. (Customize base URL by adding resourcesBase option.)
+By default, it will try to resolve help resources with a GET request to '/resources/{locale}/help.js'. (Customize base URL by adding resourcesBase option.)
 
 Help resources file should look something like this:
   
