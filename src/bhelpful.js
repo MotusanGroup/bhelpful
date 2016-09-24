@@ -33,14 +33,17 @@
  /* opts : { cssPrefix, resourcesBase, locale, onInitialized, debug } */
 var Bhelpful = (function(opts){
 	var LOG_PREFIX = 'BHELPFUL: ';
-	var options = opts;
+	var options = opts || {};
 	var CSS_PREFIX = options.cssPrefix || 'bhlp-';
 	var debugEnabled = options.debug || false;
 	var providerName = options.providerName || 'help.js';
 	var resourcesBase = options.resourcesBase || '/resources';
 	var locale = options.locale || 'en-us';
 	var initializedCallback = typeof options.onInitialized == 'function' ?
-			options.onInitialized : onInitialized;
+			options.onInitialized : function(resources){
+				debug('Bhelpful initialized');
+				debug(resources);
+			};
 
 	// ----------------------------------------------------------------------------
 	var predefinedConditions = {
@@ -49,6 +52,12 @@ var Bhelpful = (function(opts){
 		},
 		isNotEmpty : function(context){
 			return jQuery(context.selector).html().length > 0;
+		},
+		isSelected : function(context){
+			return jQuery(context.selector).prop('checked');
+		},
+		isNotSelected : function(context){
+			return !jQuery(context.selector).prop('checked');
 		}
 	};
 
@@ -71,12 +80,6 @@ var Bhelpful = (function(opts){
 	// ----------------------------------------------------------------------------
 	var loadResources = function(cb){
 		var url = resourcesBase + '/' + locale + '/' + providerName;
-		/*
-		jQuery.get(url)
-		.complete(function(res){
-			cb(JSON.parse(res.responseText));
-		});
-		*/
 		jQuery.getScript(url)
 		.done(function(resources, textStatus){
 			debug(textStatus);
@@ -118,12 +121,6 @@ var Bhelpful = (function(opts){
 			};
 			createRenderer(resource, rendererConfig);
 		}
-	};
-
-	// ----------------------------------------------------------------------------
-	var onInitialized = function(resources){
-		debug('Bhelpful initialized');
-		debug(resources);
 	};
 
 	// ----------------------------------------------------------------------------
