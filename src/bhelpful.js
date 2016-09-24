@@ -5,20 +5,24 @@
 
  /**
  The structure of the help map is:
- <keyName> : {
-	 "selector": <cssSelector>,
-	 "help": {
-	 	"if" : [
-			<conditions>
-		],
-	 	"text" : <helpTextString> | "url" : <contentSourceUrl>
-	}
- }
+ (function(){
+ 	// specify a function that exists on the Bhelpful instance you created
+ 	<bhelpfulInstance>.createRenderers({
+		 <keyName> : {
+			 "selector": <cssSelector>,
+			 "help": {
+			 	"if" : [
+					<conditions>
+				],
+			 	"text" : <helpTextString> | "url" : <contentSourceUrl>
+			}
+		 }
+	 });
 
  Conditions can be:
  	* one of these pre-defined functions:
-		- empty (the element specified in the selector has no content)
-		- notEmpty (the element specified in the selector has content, visible or otherwise)
+		- isEmpty (the element specified in the selector has no content)
+		- isNotEmpty (the element specified in the selector has content, visible or otherwise)
  	* anonymous functions that return true:
 		function(){
 			return jQuery('input#firstName').val()=='Paul';
@@ -41,7 +45,7 @@ var Bhelpful = (function(opts){
 	// ----------------------------------------------------------------------------
 	var predefinedConditions = {
 		isEmpty : function(context){
-			return jQuery(context.selector).html().length == 0;
+			return jQuery(context.selector).html().length === 0;
 		},
 		isNotEmpty : function(context){
 			return jQuery(context.selector).html().length > 0;
@@ -60,15 +64,26 @@ var Bhelpful = (function(opts){
 	// ----------------------------------------------------------------------------
 	var initialize = function(){
 		loadResources(function(resources){
-			createRenderers(resources);
+			//createRenderers(resources);
 			initializedCallback(resources);
 		});
 	};
 	// ----------------------------------------------------------------------------
 	var loadResources = function(cb){
-		jQuery.get(resourcesBase + '/' + locale + '/' + providerName)
+		var url = resourcesBase + '/' + locale + '/' + providerName;
+		/*
+		jQuery.get(url)
 		.complete(function(res){
 			cb(JSON.parse(res.responseText));
+		});
+		*/
+		jQuery.getScript(url)
+		.done(function(resources, textStatus){
+			debug(textStatus);
+			cb(resources);
+		})
+		.fail(function(jqxhr, settings, ex){
+			error(ex);
 		});
 	};
 
@@ -125,10 +140,17 @@ var Bhelpful = (function(opts){
 				for(var i=0; i<conditions.length; i++){
 					var cond = conditions[i];
 					if(typeof predefinedConditions[cond] == 'function'){
-						result = predefinedConditions[cond](context);
-						if(result == false){
+						if(!predefinedConditions[cond](context)){
 							return;
 						}
+					}
+					else if(typeof cond == 'function'){
+						if(!cond(context)){
+							return;
+						}
+					}
+					else{
+						error('testConditions: invalid condition: ' + JSON.stringify(cond));
 					}
 				}
 				mergedText += ' ' + helpItem.text;
@@ -233,6 +255,7 @@ var Bhelpful = (function(opts){
 
 	// ----------------------------------------------------------------------------
 	 var getLocalContent = function(helpItems, cb){
+		 /*
 		 if(!helpItems.length){
 			 helpItems = [helpItems];
 		 }
@@ -243,16 +266,19 @@ var Bhelpful = (function(opts){
 			 var text = helpItem.text;
 
 		 }
-		 cb(text);
+		 cb(finalText);
+		 */
 	 };
 
-	 initialize();
+	 //initialize();
 
 	// ----------------------------------------------------------------------------
 
 	// ----------------------------------------------------------------------------
 	// public
 	return {
+		initialize : initialize,
+		createRenderers : createRenderers,
 		modalHelp : modalHelp
 	 };
 });
