@@ -174,7 +174,8 @@ var Bhelpful = (function(opts){
 			else{
 				var context = {
 					selector : selector,
-					document : document
+					document : document,
+					window : window
 				};
 
 				testConditions(helpItems, context, function(helpText){
