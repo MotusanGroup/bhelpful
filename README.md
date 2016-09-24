@@ -61,5 +61,6 @@ Help resources file should look something like this:
 
 
 Planned features: 
+* pluggable content resolvers (currently can only read text strings from the help resouces file, need to resolve from urls)
 * pluggable renderers (currently depends on jQuery and jQuery.balloon (https://urin.github.io/jquery.balloon.js/))
 
