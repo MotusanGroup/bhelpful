@@ -8,11 +8,7 @@ Add it to your project like this:
 	// configure it
 	var instance = Bhelpful({
 		debug : true,
-		locale : locale,
-		onInitialized : function(resources){
-			console.log('Got help resources: ');
-			console.dir(resources);
-		}
+		locale : locale
 	});
 		
 	// initialize it
