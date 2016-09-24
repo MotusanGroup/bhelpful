@@ -180,7 +180,9 @@ var Bhelpful = (function(opts){
 
 				testConditions(helpItems, context, function(helpText){
 					rendererConfig.contents = helpText;
-					element.showBalloon(rendererConfig);
+					if(helpText.length > 0){
+						element.showBalloon(rendererConfig);
+					}
 				});
 			}
 			shown = !shown;
