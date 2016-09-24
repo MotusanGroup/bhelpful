@@ -8,11 +8,7 @@ Add it to your project like this:
 	// configure it
 	var instance = Bhelpful({
 		debug : true,
-		locale : locale,
-		onInitialized : function(resources){
-			console.log('Got help resources: ');
-			console.dir(resources);
-		}
+		locale : locale
 	});
 		
 	// initialize it
@@ -40,11 +36,27 @@ Help resources file should look something like this:
 		      			"if" : [ "isEmpty" ],
 		      			"text" : "You don't have any items in element2 yet. Click New to create one."
 		      		}]
-		      	}
+		      	},
+		      	"item key 3" : {
+		      		"selector": "#element3",
+		      		"help": [{
+		      			"if": [ function(context){
+		      					return jQuery(context.selector).length > 3;
+		      			},
+		      			"text' : "You already got more than 3 items there. Do you still need help??"
+		      		},
+		      		{
+		      			"if": [ function(context){
+		      					return jQuery(context.selector).length <= 3;
+		      			},
+		      			"text' : "You probably want to add at least 3 items here."
+		      		},
+		      		
 		});
   	}();
 
 
 Planned features: 
+* pluggable content resolvers (currently can only read text strings from the help resouces file, need to resolve from urls)
 * pluggable renderers (currently depends on jQuery and jQuery.balloon (https://urin.github.io/jquery.balloon.js/))
 
