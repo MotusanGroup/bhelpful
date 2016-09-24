@@ -40,7 +40,22 @@ Help resources file should look something like this:
 		      			"if" : [ "isEmpty" ],
 		      			"text" : "You don't have any items in element2 yet. Click New to create one."
 		      		}]
-		      	}
+		      	},
+		      	"item key 3" : {
+		      		"selector": "#element3",
+		      		"help": [{
+		      			"if": [ function(context){
+		      					return jQuery(context.selector).length > 3;
+		      			},
+		      			"text' : "You already got more than 3 items there. Do you still need help??"
+		      		},
+		      		{
+		      			"if": [ function(context){
+		      					return jQuery(context.selector).length <= 3;
+		      			},
+		      			"text' : "You probably want to add at least 3 items here."
+		      		},
+		      		
 		});
   	}();
 
