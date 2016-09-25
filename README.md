@@ -107,6 +107,7 @@ But you can also create your own conditions. Just add an anonymous function to t
 
 ## Remote content
 You can include remote content. Instead of setting the text property, set a url and (optionally) the method and parameters.
+
 	"Some Feature" : {
 			"selector" : "#featureDiv",
 			"help" : [
@@ -122,7 +123,7 @@ You can include remote content. Instead of setting the text property, set a url 
 		}
 
 
-Planned features: 
+## Planned features 
 * pluggable content resolvers (currently can only read text strings from the help resouces file, need to resolve from urls)
 * pluggable renderers (currently depends on jQuery and jQuery.balloon (https://urin.github.io/jquery.balloon.js/))
 
