@@ -81,6 +81,27 @@ For example, your page contains a select (list box) element with ID "list". This
 			"text" : "There are no items in your list yet. Click New to add one."
 		}]
 	}
+	
+There are some pre-defined conditions you can use out-of-the box:
+* isEmpty (the selected element(s) is/are empty)
+* isNotEmpty (the selected element(s) is/are not empty)
+* isSelected (the selected radio button(s)/checkbox(es) is/are selected)
+* isNotSelected (the selected radio button(s)/checkbox(es) is/are not selected)
+
+Just add the name to the "if" array.
+
+But you can also create your own conditions. Just add an anonymous function to the "if" array. The function should return true if you want the help text to be displayed. The function takes one argument, an object that contains the selector, the window, and the document.
+
+	"item key 2" : {
+		"selector": "input#firstName",
+		"help": [{
+			"if" : [ function(context){
+				return jQuery(context.selector).val().indexOf('viagra') > -1;
+			} ],
+			"text" : "No thanks. We don't need that here."
+		}]
+	}
+
 
 Planned features: 
 * pluggable content resolvers (currently can only read text strings from the help resouces file, need to resolve from urls)
