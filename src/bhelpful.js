@@ -23,6 +23,8 @@
  	* one of these pre-defined functions:
 		- isEmpty (the element specified in the selector has no content)
 		- isNotEmpty (the element specified in the selector has content, visible or otherwise)
+		- isSelected (the checkbox/radio button element specified in the selector is selected)
+		- isNotSelected (the checkbox/radio button element specified in the selector is not selected)
  	* anonymous functions that return true:
 		function(){
 			return jQuery('input#firstName').val()=='Paul';
@@ -72,22 +74,28 @@ var Bhelpful = (function(opts){
 
 	// ----------------------------------------------------------------------------
 	var initialize = function(){
-		loadResources(function(resources){
-			//createRenderers(resources);
+		loadResources()
+		.then(function(resources){
 			initializedCallback(resources);
+		})
+		.catch(function(err){
+			error(err);
 		});
 	};
 	// ----------------------------------------------------------------------------
-	var loadResources = function(cb){
-		var url = resourcesBase + '/' + locale + '/' + providerName;
-		jQuery.getScript(url)
-		.done(function(resources, textStatus){
-			debug(textStatus);
-			cb(resources);
-		})
-		.fail(function(jqxhr, settings, ex){
-			error(ex);
+	var loadResources = function(){
+		var p = new Promise(function(resolve, reject){
+			var url = resourcesBase + '/' + locale + '/' + providerName;
+			jQuery.getScript(url)
+			.done(function(resources, textStatus){
+				debug(textStatus);
+				resolve(resources);
+			})
+			.fail(function(jqxhr, settings, ex){
+				reject(ex);
+			});
 		});
+		return p;
 	};
 
 	// ----------------------------------------------------------------------------
@@ -124,36 +132,48 @@ var Bhelpful = (function(opts){
 	};
 
 	// ----------------------------------------------------------------------------
-	var testConditions = function(helpItems, context, cb){
+	var testConditions = function(helpItems, context){
 		// merge all help items whose conditions pass (return true)
 		var mergedText = '';
-		helpItems.forEach(function(helpItem){
-			if(!helpItem.if || !helpItem.if.length){
-				mergedText += ' ' + helpItem.text;
-			}
-			else{
-				// test each condition and AND them
-				var conditions = helpItem.if;
-				for(var i=0; i<conditions.length; i++){
-					var cond = conditions[i];
-					if(typeof predefinedConditions[cond] == 'function'){
-						if(!predefinedConditions[cond](context)){
-							return;
-						}
-					}
-					else if(typeof cond == 'function'){
-						if(!cond(context)){
-							return;
-						}
-					}
-					else{
-						error('testConditions: invalid condition: ' + JSON.stringify(cond));
-					}
+		var promises = [];
+
+		var p = new Promise(function(resolve, reject){
+			helpItems.forEach(function(helpItem){
+				if(!helpItem.if || !helpItem.if.length){
+					promises.push(getContent(helpItem));
 				}
-				mergedText += ' ' + helpItem.text;
-			}
+				else{
+					// test each condition and AND them
+					var conditions = helpItem.if;
+					for(var i=0; i<conditions.length; i++){
+						var cond = conditions[i];
+						if(typeof predefinedConditions[cond] == 'function'){
+							if(!predefinedConditions[cond](context)){
+								return;
+							}
+						}
+						else if(typeof cond == 'function'){
+							if(!cond(context)){
+								return;
+							}
+						}
+						else{
+							reject('testConditions: invalid condition: ' + JSON.stringify(cond));
+						}
+					}
+					promises.push(getContent(helpItem));
+				}
+			});
+
+			Promise.all(promises)
+			.then(function(helpTexts){
+				helpTexts.forEach(function(helpText){
+					mergedText += ' ' + helpText;
+				});
+				resolve(mergedText);
+			});
 		});
-		cb(mergedText);
+		return p;
 	};
 
 	// ----------------------------------------------------------------------------
@@ -175,7 +195,8 @@ var Bhelpful = (function(opts){
 					window : window
 				};
 
-				testConditions(helpItems, context, function(helpText){
+				testConditions(helpItems, context)
+				.then(function(helpText){
 					rendererConfig.contents = helpText;
 					if(helpText.length > 0){
 						element.showBalloon(rendererConfig);
@@ -216,17 +237,17 @@ var Bhelpful = (function(opts){
 	 * An object will contain a url and other contextual information
 	 * (locale, element ID) that may be used to resolve the help content
 	 */
-	var getContent = function(contentInfo, cb){
+	var getContent = function(contentInfo){
 		if(contentInfo.url){
-			return getUrlContent(contentInfo, cb);
+			return getUrlContent(contentInfo);
 		}
 		else{
-			return getLocalContent(contentInfo, cb);
+			return getLocalContent(contentInfo);
 		}
 	};
 
 	// ----------------------------------------------------------------------------
-	 getUrlContent = function(contentInfo, cb){
+	 getUrlContent = function(contentInfo){
 		 var url = contentInfo.url;
 		 var method = contentInfo.method; // if a url, get or post?
 		 var data = contentInfo.data; // parameters to pass
@@ -240,37 +261,31 @@ var Bhelpful = (function(opts){
 			 cfg.data = data;
 		 }
 
- 		 jQuery.ajax(cfg)
-		 .fail(function(){
-			 error('Failed to load help content from ' + url);
-			 debug(contentInfo);
-			 cb({
-				 error : 'Failed to load help content from ' + url
+		 var p = new Promise(function(resolve, reject){
+	 		 jQuery.ajax(cfg)
+			 .done(function(resp){
+				 resolve(resp);
+			 })
+			 .fail(function(){
+				 debug(contentInfo);
+				 reject('Failed to load help content from ' + url);
 			 });
-		 })
-		 .success(function(resp){
-			 cb(resp.responseText);
 		 });
+		 return p;
 	 };
 
 	// ----------------------------------------------------------------------------
-	 var getLocalContent = function(helpItems, cb){
-		 /*
-		 if(!helpItems.length){
-			 helpItems = [helpItems];
-		 }
+	var getLocalContent = function(helpItem){
+		var p = new Promise(function(resolve, reject){
+			if(!helpItem.text){
+				reject('getLocalContent: help does not contain a text attribute: ' + JSON.stringify(helpItem));
+				return false;
+			}
 
-		 var finalText = false;
-		 for(var i = 0; i<helpItems.length; i++){
-			 helpItem = helpItems[i];
-			 var text = helpItem.text;
-
-		 }
-		 cb(finalText);
-		 */
-	 };
-
-	 //initialize();
+			resolve(helpItem.text);
+		});
+		return p;
+	};
 
 	// ----------------------------------------------------------------------------
 
