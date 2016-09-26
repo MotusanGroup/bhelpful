@@ -124,6 +124,6 @@ You can include remote content. Instead of setting the text property, set a url 
 
 
 ## Planned features 
-* pluggable content resolvers (currently can only read text strings from the help resouces file, need to resolve from urls)
-* pluggable renderers (currently depends on jQuery and jQuery.balloon (https://urin.github.io/jquery.balloon.js/))
+* pluggable content resolvers (currently can read text strings in the help resources file and from unprotected urls. Need to be able to support more sophisticated scenarios, e.g. paywalled content or content requiring authentication, etc.)
+* pluggable renderers (currently depends on jQuery and jQuery.balloon (https://urin.github.io/jquery.balloon.js/). Need to be able to support other rendering mechanisms.)
 
