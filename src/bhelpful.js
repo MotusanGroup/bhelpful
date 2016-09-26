@@ -47,6 +47,43 @@ var Bhelpful = (function(opts){
 				debug(resources);
 			};
 
+	var jqBalloonRenderer = function(resource){
+		var selector = resource.selector;
+		var rendererConfig = {
+			position : 'top',
+			tipSize : 15,
+			classname : CSS_PREFIX + 'quickhelp',
+			delay : 3,
+			minLifetime: 200,
+			maxLifetime: 3000,
+		};
+
+		var shown = false;
+		jQuery('body').on('mouseenter', selector, function(){
+			var element = jQuery(this);
+			if(shown){
+				element.hideBalloon();
+			}
+			else{
+				var context = {
+					selector : selector,
+					document : document,
+					window : window
+				};
+
+				getFilteredContent(resource, context)
+				.then(function(helpText){
+					rendererConfig.contents = helpText;
+					if(helpText.length > 0){
+						element.showBalloon(rendererConfig);
+					}
+				});
+			}
+			shown = !shown;
+		});
+	};
+	var defaultRenderer = options.defaultRenderer || jqBalloonRenderer;
+
 	// ----------------------------------------------------------------------------
 	var predefinedConditions = {
 		isEmpty : function(context){
@@ -119,23 +156,16 @@ var Bhelpful = (function(opts){
 				continue;
 			}
 
-			var rendererConfig = {
-				position : 'top',
-				tipSize : 15,
-				classname : CSS_PREFIX + 'quickhelp',
-				delay : 3,
-				minLifetime: 200,
-				maxLifetime: 3000,
-			};
-			createRenderer(resource, rendererConfig);
+			createRenderer(resource);
 		}
 	};
 
 	// ----------------------------------------------------------------------------
-	var testConditions = function(helpItems, context){
+	var getFilteredContent = function(resource, context){
 		// merge all help items whose conditions pass (return true)
 		var mergedText = '';
 		var promises = [];
+		var helpItems = resource.help;
 
 		var p = new Promise(function(resolve, reject){
 			helpItems.forEach(function(helpItem){
@@ -143,25 +173,14 @@ var Bhelpful = (function(opts){
 					promises.push(getContent(helpItem));
 				}
 				else{
-					// test each condition and AND them
-					var conditions = helpItem.if;
-					for(var i=0; i<conditions.length; i++){
-						var cond = conditions[i];
-						if(typeof predefinedConditions[cond] == 'function'){
-							if(!predefinedConditions[cond](context)){
-								return;
-							}
-						}
-						else if(typeof cond == 'function'){
-							if(!cond(context)){
-								return;
-							}
-						}
-						else{
-							reject('testConditions: invalid condition: ' + JSON.stringify(cond));
+					try {
+						if(testConditions(helpItem, context)){
+							promises.push(getContent(helpItem));
 						}
 					}
-					promises.push(getContent(helpItem));
+					catch(e){
+						reject(e);
+					}
 				}
 			});
 
@@ -177,58 +196,27 @@ var Bhelpful = (function(opts){
 	};
 
 	// ----------------------------------------------------------------------------
-	/* TODO: make help render pluggable and try to genericize this */
-	var createRenderer = function(resource, rendererConfig){
-		var selector = resource.selector;
-		var helpItems = resource.help;
+	var testConditions = function(helpItem, context){
+		// test each condition and AND them
+		var conditions = helpItem.if;
+		for(var i=0; i<conditions.length; i++){
+			var cond = conditions[i];
 
-		var shown = false;
-		jQuery('body').on('mouseenter', selector, function(){
-			var element = jQuery(this);
-			if(shown){
-				element.hideBalloon();
+			if(typeof predefinedConditions[cond] == 'function'){
+				if(!predefinedConditions[cond](context)){
+					return false;
+				}
+			}
+			else if(typeof cond == 'function'){
+				if(!cond(context)){
+					return false;
+				}
 			}
 			else{
-				var context = {
-					selector : selector,
-					document : document,
-					window : window
-				};
-
-				testConditions(helpItems, context)
-				.then(function(helpText){
-					rendererConfig.contents = helpText;
-					if(helpText.length > 0){
-						element.showBalloon(rendererConfig);
-					}
-				});
+				throw new Error('testConditions: invalid condition: ' + JSON.stringify(cond));
 			}
-			shown = !shown;
-		});
-	};
-
-	// ----------------------------------------------------------------------------
-	/*
-	 * For larger, richer content (images, videos, HTML)
-	 */
-	var modalHelp = function(selector, conditions, contentInfo){
-		var dlg = jQuery('#' + CSS_PREFIX + 'modalhelp');
-
-		dlg.on('hidden.bs.modal', function(e) {
-			//dlg.off('click', '.modal-header button.close');
-
-			// if there were helper balloons, remove them too
-			jQuery('.help-helpers').remove();
-		});
-
-		getContent(contentInfo, function(content){
-			dlg.find('.modal-body').html(content);
-			dlg.modal({
-				backdrop : 'static'
-			});
-			dlg.modal('show');
-		});
-		return dlg;
+		}
+		return true;
 	};
 
 	// ----------------------------------------------------------------------------
@@ -291,11 +279,20 @@ var Bhelpful = (function(opts){
 
 	// ----------------------------------------------------------------------------
 	// public
-	return {
+	var publicMembers = {
 		initialize : initialize,
 		createRenderers : createRenderers,
-		modalHelp : modalHelp
+		getFilteredContent : getFilteredContent
 	 };
+
+ 	// ----------------------------------------------------------------------------
+ 	/* Use the default help renderer unless overridden by this resource */
+ 	var createRenderer = function(resource){
+ 		var renderer = resource.renderer || defaultRenderer;
+ 		renderer.apply(publicMembers, [resource]);
+ 	};
+
+	return publicMembers;
 });
 
 if(window.module && window.module.exports){
