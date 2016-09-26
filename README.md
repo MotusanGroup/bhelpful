@@ -145,12 +145,14 @@ For example, the following renderer function displays the browser's alert box wh
 		jQuery('body').on('mouseover', resource.selector, function(ev){
 			self.getFilteredContent(resource, context)
 			.then(function(helpText){
-				alert("Renderer override happenin' here!\n" + helpText);
+				alert(helpText);
 			});
 		});
 	}
 
-If you want all your help targets to be rendered this way, set defaultRenderer to this function during initialization. If you only want to use this for a specific resource, assign it that resource as follows:
+If you want all your help targets to be rendered this way, set defaultRenderer to this function during initialization. 
+
+If you only want to use this for a specific resource, assign it that resource as follows:
 
 	"Some Feature" : {
 		"selector" : "#featureDiv",
@@ -175,7 +177,7 @@ If you want all your help targets to be rendered this way, set defaultRenderer t
 			jQuery('body').on('mouseover', resource.selector, function(ev){
 				self.getFilteredContent(resource, context)
 				.then(function(helpText){
-					alert("Renderer override happenin' here!\n" + helpText);
+					alert(helpText);
 				});
 			});
 		}
