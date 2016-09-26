@@ -1,22 +1,25 @@
 # bhelpful
 Condition-based context-sensitive help
 
-A step up from mapping element selectors to help content, this adds the ability to test if the selected element contains content (or more more advanced condition checking). So you can display different content depending on the state.
+A step up from mapping element selectors to help content, this adds the ability to test if the selected element contains content (or more advanced condition checking). So you can display different content depending on the state.
 
 ## Setting it up
 Add it to your web app like this:
 
-	/* Instantiate it. optionally pass in an options object like this (these are the defaults):
+	// Instantiate it. 
+	var instance = Bhelpful();
+	
+	/* optionally pass in an options object like this (these are the defaults):
 	 * {
 	 *	debug : false,
 	 *	resourcesBase : '/resources',
 	 *	locale : 'en-us',
 	 *	providerName : 'help.js',
 	 *	cssPrefix : 'bhlp-',
-	 *	onInitialized : function(resources) { console.dir(resources); }
+	 *	onInitialized : function(resources) { console.dir(resources); },
+	 *	defaultRenderer : function(resource) { /* renderer init */ } 
 	 * }
 	 */
-	var instance = Bhelpful();
 		
 	// Initialize it
 	instance.initialize();
@@ -122,8 +125,70 @@ You can include remote content. Instead of setting the text property, set a url 
 			]
 		}
 
+## Alternative renderers
+Out of the box, Bhelpful displays a help balloon for a couple seconds when the mouse moves over elements matching the selector. (This implementation depends on jQuery and jQuery.balloon (https://urin.github.io/jquery.balloon.js/))
+
+You may want a different behavior and/or look and feel. You can specify a defaultRenderer in the options you pass to the constructor, and this will be used as the default for rendering all your resources. You can also override this on individual resources.
+
+A renderer is a function that specifies how the help is fetched and displayed for a given resource. It takes a resource as an argument. The implementation can access this.getFilteredContent to apply the conditions and retrieve the resulting text to display as specified in the help resources file, but this is not required.
+
+For example, the following renderer function displays the browser's alert box when the mouse hovers over elements matching the selector.
+
+	function(resource){
+		var self = this;
+		var context = {
+			selector : resource.selector,
+			document : document,
+			window : window
+		};
+
+		jQuery('body').on('mouseover', resource.selector, function(ev){
+			self.getFilteredContent(resource, context)
+			.then(function(helpText){
+				alert("Renderer override happenin' here!\n" + helpText);
+			});
+		});
+	}
+
+If you want all your help targets to be rendered this way, set defaultRenderer to this function during initialization. If you only want to use this for a specific resource, assign it that resource as follows:
+
+	"Some Feature" : {
+		"selector" : "#featureDiv",
+		"help" : [
+			{
+				"url": "https://example.org/helpfulsystem/help.php",
+				"method": "GET",
+				"data": {
+					"topic":"someFeature",
+					"randomParam":"something"
+				}
+			}
+		],
+		"renderer" : function(resource){
+			var self = this;
+			var context = {
+				selector : resource.selector,
+				document : document,
+				window : window
+			};
+
+			jQuery('body').on('mouseover', resource.selector, function(ev){
+				self.getFilteredContent(resource, context)
+				.then(function(helpText){
+					alert("Renderer override happenin' here!\n" + helpText);
+				});
+			});
+		}
+	}
+	
+## The API
+
+There's not much here. There are three public members on the Bhelpful instance:
+* *initialize* : fetches help resources and calls the initialized callback when complete. Generally, this is only called once to initialize the help.
+* *createRenderers* : called from the anonymous function in the help resources file. It takes the help resources object and invokes the renderers for each help resource. Generally, this is only called once to initialize the help.
+* *getFilteredContent* : this method takes a help resource and a context as arguments and returns a Promise that resolves to the content that will be displayed for that resource. The context specifies any values that may be needed when evaluating the conditions. First, for each help item, each condition in the if array is evaluated. If any conditions on a help item fail, the content of that item will not be rendered. If all conditions pass, it will check for either a text or a url property and retrieve the content accordingly. (If both are present, text is used.) Finally, all text for all help items whose conditions passed is merged into a single help text.
 
 ## Planned features 
-* pluggable content resolvers (currently can read text strings in the help resources file and from unprotected urls. Need to be able to support more sophisticated scenarios, e.g. paywalled content or content requiring authentication, etc.)
-* pluggable renderers (currently depends on jQuery and jQuery.balloon (https://urin.github.io/jquery.balloon.js/). Need to be able to support other rendering mechanisms.)
+* pluggable content resolvers (Currently can read text strings in the help resources file and from unprotected urls. Need to be able to support more sophisticated scenarios, e.g. paywalled content or content requiring authentication, etc.)
+* pre-defined pluggable renderers (Currently only supports jqBalloon. Need to be able to support other rendering mechanisms out-of-the-box.)
 
