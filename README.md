@@ -27,7 +27,7 @@ Add it to your web app like this:
 By default, it will try to fetch help resources by sending a GET request to '{resourcesBase}/{locale}/{providerName}' (/resources/en-us/help.js).
 
 ## Help resources
-This is where you map your help content to your web app's page elements. Your help resources file should look something like the following. (Note that this is NOT JSON. It's an anonymous Javascript function (necessary to support inclusion of custom conditions). It must call the createRenderers method on the Bhelpful instance.)
+This is where you map your help content to your web app's page elements. Your help resources file should look something like the following. (Note that this is NOT JSON. It's an anonymous Javascript function (necessary to support inclusion of custom conditions and renderers). It must call the createRenderers method on the Bhelpful instance.)
   
 	(function(){
 		// call the createRenderers method on the instance you created
