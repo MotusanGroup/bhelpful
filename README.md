@@ -24,10 +24,10 @@ Add it to your web app like this:
 	// Initialize it
 	instance.initialize();
 
-By default, it will try to fetch help resources by sending a GET request to '{resourcesBase}/{locale}/{providerName}' (/resources/en-us/help.js).
+By default, it will try to fetch [help resources](#help-resources) by sending a GET request to '{resourcesBase}/{locale}/{providerName}' (/resources/en-us/help.js).
 
 ## Help resources
-This is where you map your help content to your web app's page elements. Your help resources file should look something like the following. (Note that this is NOT JSON. It's an anonymous Javascript function (necessary to support inclusion of custom conditions and renderers). It must call the createRenderers method on the Bhelpful instance.)
+This is where you map your help content to your web app's page elements. Your help resources file should look something like the following. (Note that this is NOT JSON. It's an anonymous Javascript function (necessary to support inclusion of custom [conditions](#conditions) and [renderers](#alternative-renderers)). It must call the [createRenderers](#the-api) method on the Bhelpful instance.)
   
 	(function(){
 		// call the createRenderers method on the instance you created
@@ -67,7 +67,7 @@ This is where you map your help content to your web app's page elements. Your he
 		});
   	}();
 
-The object passed to createRenderers is a map of your context-sensitive help content. The item keys can be whatever you want. (Only requirement is that they're unique.) Each key points to an object that contains:
+The object passed to [createRenderers](#the-api) is a map of your context-sensitive help content. The item keys can be whatever you want. (Only requirement is that they're unique.) Each key points to an object that contains:
 * selector: the CSS/jQuery selector that identifies the element(s) that will trigger context-sensitive help
 * help: an object or array of objects that contains:
   * the text to display when triggered or a URL that resolves some remote content
@@ -131,9 +131,9 @@ You can include remote content. Instead of setting the text property, set a url,
 ## Alternative renderers
 Out of the box, Bhelpful displays a help balloon for a couple seconds when the mouse moves over elements matching the selector. (This implementation depends on jQuery and jQuery.balloon (https://urin.github.io/jquery.balloon.js/))
 
-You may want a different behavior and/or look and feel. You can specify a defaultRenderer in the options you pass to the constructor, and this will be used as the default for rendering all your resources. You can also override this on individual resources.
+You may want a different behavior and/or look and feel. You can specify a *defaultRenderer* in the options you pass to the [constructor](#setting-it-up), and this will be used as the default for rendering all your resources. You can also override this on individual resources.
 
-A renderer is a function that specifies how the help is triggered, fetched, and displayed for a given resource. It takes the resource as an argument. The implementation can access *this.getFilteredContent* to apply the conditions and retrieve the resulting text to display as specified in the help resources file, but this is not required.
+A renderer is a function that specifies how the help is triggered, fetched, and displayed for a given resource. It takes the resource as an argument. The implementation can call [this.getFilteredContent](#the-api) to apply the conditions and retrieve the resulting text to display as specified in the help resources file, but this is not required.
 
 For example, the following renderer function displays the browser's alert box when the mouse hovers over elements matching the selector.
 
@@ -190,7 +190,7 @@ If you only want to use this for a specific resource, assign it to that resource
 
 The Bhelpful instance has three public members:
 * *initialize* : fetches help resources and calls the initialized callback when complete. Generally, this is only called once to initialize the help.
-* *createRenderers* : called from the anonymous function in the help resources file. It takes the help resources object and invokes the renderers for each help resource. Generally, this is only called once to initialize the help.
+* *createRenderers* : called from the anonymous function in the [help resources](#help-resources) file. It takes the help resources object and invokes the renderers for each help resource. Generally, this is only called once to initialize the help.
 * *getFilteredContent* : this method takes a help resource and a context as arguments and returns a Promise that resolves to the content that will be displayed for that resource. The context specifies any values that may be needed when evaluating the conditions. First, for each help item, each condition in the if array is evaluated. If any conditions on a help item fail, the content of that item will not be rendered. If all conditions pass, it will check for either a text or a url property and retrieve the content accordingly. (If both are present, text is used.) Finally, all text for all help items whose conditions passed is merged into a single help text.
 
 ## Planned features 
