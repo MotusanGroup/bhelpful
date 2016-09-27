@@ -99,7 +99,7 @@ There are some pre-defined conditions you can use out-of-the box:
 
 Just add the name to the help item's "if" array. (Note that if there are multiple help items with true conditions mapped to the same selector, their text will be merged.)
 
-But you can also create your own conditions. Just add an anonymous function to the "if" array. The function should return true if you want the help text to be displayed. The function takes one argument, a context object that, by default, contains the selector, the window, and the document. (The context object is defined in the renderer. For more information, see the section [Alternative Renderers](#Alternative Renderers).)
+But you can also create your own conditions. Just add an anonymous function to the "if" array. The function should return true if you want the help text to be displayed. The function takes one argument, a context object that, by default, contains the selector, the window, and the document. (The context object is defined in the renderer. For more information, see the section [Alternative Renderers](#alternative-renderers).)
 
 	"item key 2" : {
 		"selector": "input#firstName",
