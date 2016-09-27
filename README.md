@@ -69,7 +69,10 @@ This is where you map your help content to your web app's page elements. Your he
 
 The object passed to createRenderers is a map of your context-sensitive help content. The item keys can be whatever you want. (Only requirement is that they're unique.) Each key points to an object that contains:
 * selector: the CSS/jQuery selector that identifies the element(s) that will trigger context-sensitive help
-* help: an object that contains 1) the help text to display when triggered and 2) any conditions you want to check before displaying (optional)
+* help: an object or array of objects that contains:
+  * the text to display when triggered or a URL that resolves some remote content
+  * an "if" array (optional) containing any conditions you want to check before displaying
+  * a renderer function (optional) that sets up how the help will be rendered
 
 ## Conditions
 Conditions are what make Bhelpful so helpful. Most context-sensitive help is only nominally context-aware. You can specify conditions to check the state of the UI in real time to decide what help text to display.
@@ -96,7 +99,7 @@ There are some pre-defined conditions you can use out-of-the box:
 
 Just add the name to the help item's "if" array. (Note that if there are multiple help items with true conditions mapped to the same selector, their text will be merged.)
 
-But you can also create your own conditions. Just add an anonymous function to the "if" array. The function should return true if you want the help text to be displayed. The function takes one argument, an object that contains the selector, the window, and the document.
+But you can also create your own conditions. Just add an anonymous function to the "if" array. The function should return true if you want the help text to be displayed. The function takes one argument, a context object that, by default, contains the selector, the window, and the document. (The context object is defined in the renderer. For more information, see the section [Alternative Renderers](#Alternative Renderers).)
 
 	"item key 2" : {
 		"selector": "input#firstName",
@@ -109,7 +112,7 @@ But you can also create your own conditions. Just add an anonymous function to t
 	}
 
 ## Remote content
-You can include remote content. Instead of setting the text property, set a url and (optionally) the method and parameters.
+You can include remote content. Instead of setting the text property, set a url, the method (optional, defaults to GET), and parameters (optional).
 
 	"Some Feature" : {
 			"selector" : "#featureDiv",
@@ -130,7 +133,7 @@ Out of the box, Bhelpful displays a help balloon for a couple seconds when the m
 
 You may want a different behavior and/or look and feel. You can specify a defaultRenderer in the options you pass to the constructor, and this will be used as the default for rendering all your resources. You can also override this on individual resources.
 
-A renderer is a function that specifies how the help is fetched and displayed for a given resource. It takes a resource as an argument. The implementation can access this.getFilteredContent to apply the conditions and retrieve the resulting text to display as specified in the help resources file, but this is not required.
+A renderer is a function that specifies how the help is triggered, fetched, and displayed for a given resource. It takes the resource as an argument. The implementation can access *this.getFilteredContent* to apply the conditions and retrieve the resulting text to display as specified in the help resources file, but this is not required.
 
 For example, the following renderer function displays the browser's alert box when the mouse hovers over elements matching the selector.
 
@@ -150,9 +153,9 @@ For example, the following renderer function displays the browser's alert box wh
 		});
 	}
 
-If you want all your help targets to be rendered this way, set defaultRenderer to this function during initialization. 
+If you want all your help targets to be rendered this way, set *defaultRenderer* to this function during initialization. 
 
-If you only want to use this for a specific resource, assign it that resource as follows:
+If you only want to use this for a specific resource, assign it to that resource as follows:
 
 	"Some Feature" : {
 		"selector" : "#featureDiv",
@@ -185,7 +188,7 @@ If you only want to use this for a specific resource, assign it that resource as
 	
 ## The API
 
-There's not much here. There are three public members on the Bhelpful instance:
+The Bhelpful instance has three public members:
 * *initialize* : fetches help resources and calls the initialized callback when complete. Generally, this is only called once to initialize the help.
 * *createRenderers* : called from the anonymous function in the help resources file. It takes the help resources object and invokes the renderers for each help resource. Generally, this is only called once to initialize the help.
 * *getFilteredContent* : this method takes a help resource and a context as arguments and returns a Promise that resolves to the content that will be displayed for that resource. The context specifies any values that may be needed when evaluating the conditions. First, for each help item, each condition in the if array is evaluated. If any conditions on a help item fail, the content of that item will not be rendered. If all conditions pass, it will check for either a text or a url property and retrieve the content accordingly. (If both are present, text is used.) Finally, all text for all help items whose conditions passed is merged into a single help text.
